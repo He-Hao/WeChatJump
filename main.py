@@ -304,7 +304,7 @@ def run(step):
             press_duration = calc_press_duration(distance)
             simulate_long_press(int(press_duration))
         i = i + 1
-        random_sleep = random.uniform(1.2, 1.6)
+        random_sleep = random.uniform(0.2, 0.6)
         print([current_coordinate, target_coordinate, distance, press_duration, random_sleep])
 
         time.sleep(random_sleep)
