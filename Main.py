@@ -7,107 +7,107 @@ import numpy
 import random
 import time
 
-from json import loads
 from PIL import Image
-from matchImg import matchImg
-from findBoard import find_piece_and_board
-from Coo import get_coo
+from match_img import match_img
+from find_board import find_piece_and_board
 
 
 # 获取屏幕截图
-def getScreenshot():
-    sourceFile = "Content/WeChatJump.png"
-    bakFile = "Content/WeChatJumpBak.png"
+def get_screen_shot():
+    source_file = "Content/WeChatJump.png"
+    bak_file = "Content/WeChatJumpBak.png"
     os.system('adb shell screencap -p /sdcard/WeChatJump.png')
     if os.path.exists("Content/WeChatJump.png"):
-        open(bakFile, "wb").write(open(sourceFile, "rb").read())
+        open(bak_file, "wb").write(open(source_file, "rb").read())
     os.system('adb pull /sdcard/WeChatJump.png Content')
-    return sourceFile
+    return source_file
+
 
 # 备份截图
-def bakScreenshot(type):
-    bakFile = "Log/Warning" + (time.strftime('%y%m%d%H%M%S',time.localtime(time.time()))) + ".png"
-    sourceFile = "Content/WeChatJump.png"
-    open(bakFile, "wb").write(open(sourceFile, "rb").read())
-    if type == "Error":
-        bakFile = "Log/Error" + (time.strftime('%y%m%d%H%M%S', time.localtime(time.time()))) + ".png"
-        sourceFile = "Content/WeChatJumpBak.png"
-        open(bakFile, "wb").write(open(sourceFile, "rb").read())
+def bak_screen_shot(code):
+    bak_file = "Log/Warning" + (time.strftime('%y%m%d%H%M%S', time.localtime(time.time()))) + ".png"
+    source_file = "Content/WeChatJump.png"
+    open(bak_file, "wb").write(open(source_file, "rb").read())
+    if code == "Error":
+        bak_file = "Log/Error" + (time.strftime('%y%m%d%H%M%S', time.localtime(time.time()))) + ".png"
+        source_file = "Content/WeChatJumpBak.png"
+        open(bak_file, "wb").write(open(source_file, "rb").read())
+
 
 # 模拟按压键盘
-def simulateLongPress(duration):
+def simulate_long_press(duration):
     os.system('adb shell input swipe 250 250 250 250 %s' % duration)
 
+
 # 通过距离来计算按压持续时间
-def calcPressDuration(distance):
-    duration = distance*1.35
+def calc_press_duration(distance):
+    duration = distance * 1.35
     return duration
 
-# 获取当前坐标
-def getCurrentCoordinate(photo):
 
+# 获取当前坐标
+def get_current_coordinate(photo):
     # Way 1
-    imgsrc = 'Content/Mark.png'
-    imgMatchResult = matchImg(imgsrc, photo, 0.5)
-    if imgMatchResult == None:
+    img_src = 'Content/Mark.png'
+    img_match_result = match_img(img_src, photo, 0.5)
+    if img_match_result is None:
         return [-1, -1]
     else:
-        confidence = imgMatchResult["confidence"]
+        confidence = img_match_result["confidence"]
         if confidence < 0.7:
             return [-1, -1]
         else:
-            result = imgMatchResult["result"]
+            result = img_match_result["result"]
             # 去除默认460px 去除边框40px
-            x = result[0]-460-40
+            x = result[0] - 460 - 40
             # 去除默认460px 去除边框40px
-            y = result[1]-750-20
+            y = result[1] - 750 - 20
             return [x, y]
 
+
 # 获取当前坐标（方法2）
-def getCurrentCoordinate2(photo):
-    '''
-        # Way 2
-        im = Image.open(photo)
-        imPixel = im.load()
-        bgcolor = imPixel[100, 100]
-        w, h = im.size
-        piece_x = 0
-        piece_x_count = 0
-        piece_x_sum = 0
-        piece_y = 0
-        piece_y_count = 0
-        piece_y_sum = 0
-        scan_start_y = 0  #扫描的起始y坐标
+def get_current_coordinate2(photo):
+    # Way 2
+    im = Image.open(photo)
+    im_pixel = im.load()
+    # bg_color = im_pixel[100, 100]
+    w, h = im.size
+    piece_x = 0
+    piece_x_count = 0
+    piece_x_sum = 0
+    piece_y = 0
+    # piece_y_count = 0
+    # piece_y_sum = 0
+    scan_start_y = 0  # 扫描的起始y坐标
 
-        for i in range(int(h/3), int(h*2/3), 50):
-            last_pixel = imPixel[0, i]
-            for j in range(1, w):
-                pixel = imPixel[j, i]
-                if pixel != last_pixel:
-                    scan_start_y = i-50
-                    break
-                if scan_start_y:
-                    break
+    for i in range(int(h / 3), int(h * 2 / 3), 50):
+        last_pixel = im_pixel[0, i]
+        for j in range(1, w):
+            pixel = im_pixel[j, i]
+            if pixel != last_pixel:
+                scan_start_y = i - 50
+                break
+            if scan_start_y:
+                break
 
-        for i in range(scan_start_y, int(h*2/3)):
-            for j in range(int(w/8), (w-int(w/8))):
-                pixel = imPixel[j, i]
-                if (50 < pixel[0] < 60) and (53 < pixel[1] < 63) and (95 < pixel[2] < 110):
-                    piece_x_sum += j
-                    piece_x_count += 1
-                    piece_y = max(i, piece_y)
-        if piece_x_sum:
-            piece_x = piece_x_sum/piece_x_count
-        x = piece_x
-        y = piece_y-20
-        return [x, y]
-        '''
+    for i in range(scan_start_y, int(h * 2 / 3)):
+        for j in range(int(w / 8), (w - int(w / 8))):
+            pixel = im_pixel[j, i]
+            if (50 < pixel[0] < 60) and (53 < pixel[1] < 63) and (95 < pixel[2] < 110):
+                piece_x_sum += j
+                piece_x_count += 1
+                piece_y = max(i, piece_y)
+    if piece_x_sum:
+        piece_x = piece_x_sum / piece_x_count
+    x = piece_x
+    y = piece_y - 20
+    return [x, y]
+
 
 # 获取目标点坐标
-def getTargetCoordinate(currentCoordinate, photo):
-
+def get_target_coordinate(current_coordinate, photo):
     # Way1
-    mark_coo = currentCoordinate
+    mark_coo = current_coordinate
     mark_coo_x = mark_coo[0]
     mark_coo_y = mark_coo[1]
 
@@ -146,7 +146,7 @@ def getTargetCoordinate(currentCoordinate, photo):
         for i in range(scan_start_x, scan_end_x, range_step_x):
             pixel = im_pixel[i, j]
             # 避免棋子过高
-            if abs(i-mark_coo_x) < 40:
+            if abs(i - mark_coo_x) < 40:
                 continue
             diff = abs(pixel[0] - start_pixel[0]) + abs(pixel[1] - start_pixel[1]) + abs(pixel[2] - start_pixel[2])
             # print(diff)
@@ -161,8 +161,8 @@ def getTargetCoordinate(currentCoordinate, photo):
     # 通过获取到的最高点的中间位置获取到最右侧或最左侧点的位置（获取y坐标）
     pixels = []
     previous_x = w
-    previous_pixel = [-1, -1, -1]
-    # print(range_step_x)
+    # previous_pixel = [-1, -1, -1]
+    # print(previous_pixel)
     if range_step_x < 0:
         previous_x = 0
     # print('SCAN_Y:', scan_start_y, scan_end_y, range_step_y, '\nSCAN_X:', scan_start_x, scan_end_x, range_step_x, )
@@ -170,7 +170,7 @@ def getTargetCoordinate(currentCoordinate, photo):
         start_pixel = im_pixel[scan_start_x, k]
         for i in range(scan_start_x, scan_end_x, range_step_x):
             pixel = im_pixel[i, k]
-           
+
             diff = abs(pixel[0] - start_pixel[0]) + abs(pixel[1] - start_pixel[1]) + abs(pixel[2] - start_pixel[2])
             if diff > 10:
                 # 获取到边缘线的坐标集
@@ -202,21 +202,21 @@ def getTargetCoordinate(currentCoordinate, photo):
                 board_coo_y = m[1]
     return [int(board_coo_x), board_coo_y]
 
-# 获取目标点坐标（方法2）
-def getTargetCoordinate2(currentCoordinate, photo):
 
+# 获取目标点坐标（方法2）
+def get_target_coordinate2(current_coordinate, photo):
     # Way 2
     im = Image.open(photo)
-    imPixel = im.load()
+    im_pixel = im.load()
     w, h = im.size
     board_x = 0
 
     board_y = 0
 
-    piece_x = currentCoordinate[0]
-    piece_y = currentCoordinate[1]
+    piece_x = current_coordinate[0]
+    piece_y = current_coordinate[1]
 
-    if piece_x < w/2:
+    if piece_x < w / 2:
         board_x_start = piece_x
         board_x_end = w
     else:
@@ -226,22 +226,22 @@ def getTargetCoordinate2(currentCoordinate, photo):
     # print(['Test', piece_x, piece_y, int(board_x_start), int(board_x_end), int(h/3), piece_y])
 
     # 纵向检索，找到目标平台最上方的位置对应的x坐标
-    for j in range(int(h/3), int(piece_y)):
-        last_pixel = imPixel[board_x, j]
+    for j in range(int(h / 3), int(piece_y)):
+        last_pixel = im_pixel[board_x, j]
         if board_x or board_y:
             break
         board_x_count = 0
         board_x_sum = 0
         for i in range(int(board_x_start), int(board_x_end), 1):
-            pixel = imPixel[i, j]
+            pixel = im_pixel[i, j]
 
             # 棋子过高
-            if abs(i-piece_x) < 70:
+            if abs(i - piece_x) < 70:
                 continue
 
-            pixDiff = abs(pixel[0]-last_pixel[0]) + abs(pixel[1]-last_pixel[1]) + abs(pixel[2]-last_pixel[2])
+            pix_diff = abs(pixel[0] - last_pixel[0]) + abs(pixel[1] - last_pixel[1]) + abs(pixel[2] - last_pixel[2])
             # print([i, j, pixDiff])
-            if pixDiff > 10:
+            if pix_diff > 10:
                 board_x_sum += i
                 board_x_count += 1
                 if board_x_sum:
@@ -249,99 +249,72 @@ def getTargetCoordinate2(currentCoordinate, photo):
                 break
 
     # 横向检索，找到目标平台中间位置对应的y坐标
-    for k in range(j+275, j, -1):
-        pixel = imPixel[board_x, k]
+    for k in range(j + 275, j, -1):
+        pixel = im_pixel[board_x, k]
         # 棋子过高
-        if abs(i-piece_x) < 70:
+        if abs(i - piece_x) < 70:
             continue
         if abs(pixel[0] - last_pixel[0]) + abs(pixel[1] - last_pixel[1]) + abs(pixel[2] - last_pixel[2]) < 10:
             break
-    board_y = int((j+k)/2)
+    board_y = int((j + k) / 2)
 
-
-    for z in range(j, j+200):
-        pixel = imPixel[board_x, i]
+    for z in range(j, j + 200):
+        pixel = im_pixel[board_x, i]
         if abs(pixel[0] - 245) + abs(pixel[1] - 245) + abs(pixel[1] - 245) == 0:
-            board_y = z+10
+            board_y = z + 10
             break
     x = board_x
     y = board_y
     return [x, y]
 
+
 # 通过当前坐标和目标坐标获取距离
-def getDistance(currentCoordinate,targetCoordinate):
-    x = targetCoordinate[0]-currentCoordinate[0]
-    y = targetCoordinate[1]-currentCoordinate[1]
-    distance = math.sqrt(numpy.square(x)+numpy.square(y))
+def get_distance(current_coordinate, target_coordinate):
+    x = target_coordinate[0] - current_coordinate[0]
+    y = target_coordinate[1] - current_coordinate[1]
+    distance = math.sqrt(numpy.square(x) + numpy.square(y))
     return distance
+
 
 # 目标步数
 def run(step):
     i = 1
-    errorTime = 1
+    error_time = 1
     while i <= step:
         time.sleep(0.1)
-        photo = getScreenshot()
+        photo = get_screen_shot()
         time.sleep(0.1)
-        currentCoordinate = getCurrentCoordinate(photo)
-        if currentCoordinate[0] < 0:
-            errorTime = errorTime + 1
+        current_coordinate = get_current_coordinate(photo)
+        if current_coordinate[0] < 0:
+            error_time = error_time + 1
             print('Error!')
-            bakScreenshot('Error')
+            bak_screen_shot('Error')
             # return
             os.system('adb shell input tap 545 1580')
 
-            if errorTime >= 1:
+            if error_time >= 1:
                 return
 
         else:
-            targetCoordinate = getTargetCoordinate(currentCoordinate, photo)
+            target_coordinate = get_target_coordinate(current_coordinate, photo)
             piece_and_board = find_piece_and_board(Image.open(photo))
-            # targetCoordinate2 = [piece_and_board[2], piece_and_board[3]]
-            # targetCoordinate = [
-            #     (targetCoordinate1[0]+targetCoordinate2[0])/2,
-            #     (targetCoordinate1[1]+targetCoordinate2[1])/2
-            # ]
-            # if abs(targetCoordinate1[0]-targetCoordinate2[0]) > 10 and abs(targetCoordinate1[1]-targetCoordinate2[1]) > 10:
-            #     bakScreenshot('Waring')
-            distance = getDistance(currentCoordinate, targetCoordinate)
-            pressDuration = calcPressDuration(distance)
-            simulateLongPress(int(pressDuration))
+            print(piece_and_board)
+
+            distance = get_distance(current_coordinate, target_coordinate)
+            press_duration = calc_press_duration(distance)
+            simulate_long_press(int(press_duration))
         i = i + 1
         random_sleep = random.uniform(1.2, 1.6)
-        print([currentCoordinate, targetCoordinate, distance, pressDuration, random_sleep])
+        print([current_coordinate, target_coordinate, distance, press_duration, random_sleep])
 
         time.sleep(random_sleep)
+
 
 # 主程序
 def main():
     step = 100
     run(step)
 
-# main()
 
-def WarningTest():
-    photo = 'Content/WeChatJumpBak.png'
-    photo = 'Log/Error180122152915.png'
-    im = Image.open(photo)
-    coo = get_coo(photo)
-    currentCoordinate = getCurrentCoordinate(photo)
-    print(currentCoordinate)
-    # targetCoordinate = getTargetCoordinate(currentCoordinate, photo)
-    # print([currentCoordinate, targetCoordinate])
-    # piece_and_board = find_piece_and_board(Image.open(photo))
-    # targetCoordinate2 = [piece_and_board[2], piece_and_board[3]]
-    # targetCoordinate = [
-    #     (targetCoordinate1[0] + targetCoordinate2[0]) / 2,
-    #     (targetCoordinate1[1] + targetCoordinate2[1]) / 2
-    # ]
-    #
-    # print([currentCoordinate, targetCoordinate1, targetCoordinate2, targetCoordinate])
-    #
-    # im.show()
-
-main()
-# WarningTest()
-
-
-
+if __name__ == '__main__':
+    main()

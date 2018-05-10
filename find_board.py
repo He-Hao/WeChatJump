@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
+
 def find_piece_and_board(im):
     """
     寻找关键坐标
@@ -16,7 +17,7 @@ def find_piece_and_board(im):
     scan_start_y = 0  # 扫描的起始 y 坐标
     im_pixel = im.load()
     # 以 50px 步长，尝试探测 scan_start_y
-    for i in range(int(h / 3), int(h*2 / 3), 50):
+    for i in range(int(h / 3), int(h * 2 / 3), 50):
         last_pixel = im_pixel[0, i]
         for j in range(1, w):
             pixel = im_pixel[j, i]
@@ -48,7 +49,7 @@ def find_piece_and_board(im):
     piece_y = piece_y_max - 20  # 上移棋子底盘高度的一半
 
     # 限制棋盘扫描的横坐标，避免音符 bug
-    if piece_x < w/2:
+    if piece_x < w / 2:
         board_x_start = piece_x
         board_x_end = w
     else:
@@ -81,19 +82,19 @@ def find_piece_and_board(im):
     # 从上顶点往下 +274 的位置开始向上找颜色与上顶点一样的点，为下顶点
     # 该方法对所有纯色平面和部分非纯色平面有效，对高尔夫草坪面、木纹桌面、
     # 药瓶和非菱形的碟机（好像是）会判断错误
-    for k in range(i+274, i, -1):  # 274 取开局时最大的方块的上下顶点距离
+    for k in range(i + 274, i, -1):  # 274 取开局时最大的方块的上下顶点距离
         pixel = im_pixel[board_x, k]
         if abs(pixel[0] - last_pixel[0]) \
                 + abs(pixel[1] - last_pixel[1]) \
                 + abs(pixel[2] - last_pixel[2]) < 10:
             break
-    board_y = int((i+k) / 2)
+    board_y = int((i + k) / 2)
 
     # 如果上一跳命中中间，则下个目标中心会出现 r245 g245 b245 的点，利用这个
     # 属性弥补上一段代码可能存在的判断错误
     # 若上一跳由于某种原因没有跳到正中间，而下一跳恰好有无法正确识别花纹，则有
     # 可能游戏失败，由于花纹面积通常比较大，失败概率较低
-    for j in range(i, i+200):
+    for j in range(i, i + 200):
         pixel = im_pixel[board_x, j]
         if abs(pixel[0] - 245) + abs(pixel[1] - 245) + abs(pixel[2] - 245) == 0:
             board_y = j + 10
